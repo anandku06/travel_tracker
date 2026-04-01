@@ -3,11 +3,15 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { PrismaModModule } from 'src/prisma_mod/prisma_mod.module';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
     PrismaModModule,
+    PassportModule,
+    ConfigModule,
     // register the JwtModule with a factory function to get the secret from environment variables
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -23,14 +27,15 @@ import { ConfigService } from '@nestjs/config';
       },
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
+  exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
 
 /**
  * Why not using the JwtModule.register()?
- * Using JwtModule.register() would require us to directly access process.env.JWT_SECRET at the time of module registration, which can lead to issues if the environment variable is not set or if we want to have more control over how the secret is provided (e.g., through a configuration service). 
+ * Using JwtModule.register() would require us to directly access process.env.JWT_SECRET at the time of module registration, which can lead to issues if the environment variable is not set or if we want to have more control over how the secret is provided (e.g., through a configuration service).
  * By using JwtModule.registerAsync(), we can inject the ConfigService and retrieve the JWT secret in a more flexible and robust way, ensuring that our application can handle missing or misconfigured environment variables gracefully.
  */
 
